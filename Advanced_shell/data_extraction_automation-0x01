@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Ensure data.json exists
+if [ ! -f data.json ]; then
+    echo "Error: data.json not found. Run the API request script first."
+    exit 1
+fi
+
+# Extract data using jq
+name=$(jq -r '.name' data.json | sed 's/.*/\u&/') # Capitalize first letter
+height=$(jq -r '.height' data.json)
+weight=$(jq -r '.weight' data.json)
+type=$(jq -r '.types[0].type.name' data.json | sed 's/.*/\u&/') # Capitalize
+
+# Convert height (decimetres → metres) and weight (hectograms → kg)
+height_m=$(awk "BEGIN {print $height / 10}")
+weight_kg=$(awk "BEGIN {print $weight / 10}")
+
+# Print formatted output
+echo "$name is of type $type, weighs ${weight_kg}kg, and is ${height_m}m tall."

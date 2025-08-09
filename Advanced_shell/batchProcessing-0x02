@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Directory to save Pokémon data
+DATA_DIR="pokemon_data"
+mkdir -p "$DATA_DIR"
+
+# List of Pokémon
+POKEMONS=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+
+# Max retries
+MAX_RETRIES=3
+# Delay between requests (to avoid rate limiting)
+SLEEP_TIME=2
+
+# Loop through Pokémon
+for pokemon in "${POKEMONS[@]}"; do
+    echo "Fetching data for $pokemon..."
+
+    success=false
+    attempt=1
+
+    while [ $attempt -le $MAX_RETRIES ]; do
+        # Fetch Pokémon data
+        response=$(curl -s -w "%{http_code}" -o "$DATA_DIR/$pokemon.json" "https://pokeapi.co/api/v2/pokemon/$pokemon")
+
+        # Extract status code
+        status_code="${response:(-3)}"
+
+        if [ "$status_code" -eq 200 ]; then
+            echo "Saved data to $DATA_DIR/$pokemon.json"
+            success=true
+            break
+        else
+            echo "Attempt $attempt failed for $pokemon (Status: $status_code)"
+            sleep 1
+        fi
+        ((attempt++))
+    done
+
+    if [ "$success" = false ]; then
+        echo "Failed to fetch $pokemon after $MAX_RETRIES attempts" >> errors.txt
+    fi
+
+    sleep "$SLEEP_TIME"
+done
